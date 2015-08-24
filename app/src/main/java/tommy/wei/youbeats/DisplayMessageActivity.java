@@ -6,6 +6,10 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -25,21 +29,46 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
 public class DisplayMessageActivity extends Activity {
 
-    @Override
 
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
         String message = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
 
-        search(message);
+        ArrayList<SearchResult> resultList = search(message);
+
+        ArrayList<String> titleList = new ArrayList<String>();
+        for (SearchResult temp : resultList){
+            titleList.add(temp.getSnippet().getTitle());
+        }
+
+        ArrayList<String> IdList = new ArrayList<String>();
+        for (SearchResult temp : resultList){
+            IdList.add(temp.getId().getVideoId());
+        }
+
+        setContentView(R.layout.activity_display_message);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, titleList);
+        ListView lv = (ListView)findViewById(android.R.id.list);
+        lv.setAdapter(adapter);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+        });
+
+
     }
 
     @Override
@@ -57,7 +86,7 @@ public class DisplayMessageActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    public static void search(String query) {
+    public ArrayList<SearchResult> search(String query) {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
@@ -89,14 +118,16 @@ public class DisplayMessageActivity extends Activity {
             // To increase efficiency, only retrieve the fields that the
             // application uses.
             search.setFields("items(id/kind,id/videoId,snippet/title,snippet/thumbnails/default/url)");
-            search.setMaxResults(10L);
+            search.setMaxResults(20L);
 
             // Call the API and print results.queryTerm
             SearchListResponse searchResponse = search.execute();
             List<SearchResult> searchResultList = searchResponse.getItems();
             if (searchResultList != null) {
-                prettyPrint(searchResultList.iterator(), query);
+                return prettyPrint(searchResultList.iterator(), query);
             }
+
+
         } catch (GoogleJsonResponseException e) {
             System.err.println("There was a service error: " + e.getDetails().getCode() + " : "
                     + e.getDetails().getMessage());
@@ -105,18 +136,21 @@ public class DisplayMessageActivity extends Activity {
         } catch (Throwable t) {
             t.printStackTrace();
         }
+        return null;
     }
 
-    private static void prettyPrint(Iterator<SearchResult> iteratorSearchResults, String query) {
+    private ArrayList<SearchResult> prettyPrint(Iterator<SearchResult> iteratorSearchResults, String query) {
 
         System.out.println("\n=============================================================");
         System.out.println(
-                "   First " + 10 + " videos for search on \"" + query + "\".");
+                "   First " + 20 + " videos for search on \"" + query + "\".");
         System.out.println("=============================================================\n");
 
         if (!iteratorSearchResults.hasNext()) {
             System.out.println(" There aren't any results for your query.");
         }
+
+        ArrayList<SearchResult> resultList = new ArrayList<SearchResult>();
 
         while (iteratorSearchResults.hasNext()) {
 
@@ -125,6 +159,7 @@ public class DisplayMessageActivity extends Activity {
 
             // Confirm that the result represents a video. Otherwise, the
             // item will not contain a video ID.
+
             if (rId.getKind().equals("youtube#video")) {
                 Thumbnail thumbnail = singleVideo.getSnippet().getThumbnails().getDefault();
 
@@ -132,7 +167,12 @@ public class DisplayMessageActivity extends Activity {
                 System.out.println(" Title: " + singleVideo.getSnippet().getTitle());
                 System.out.println(" Thumbnail: " + thumbnail.getUrl());
                 System.out.println("\n-------------------------------------------------------------\n");
+
+                resultList.add(singleVideo);
+
+
             }
         }
+        return resultList;
     }
 }
