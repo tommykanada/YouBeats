@@ -17,8 +17,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".DisplayMessageActivity"
-            android:label="Results"
+            android:name=".SearchResultsActivity"
+            android:label="@string/title_search_results"
             android:parentActivityName=".MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
