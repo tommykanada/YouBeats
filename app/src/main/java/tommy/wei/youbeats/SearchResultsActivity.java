@@ -30,7 +30,7 @@ import static tommy.wei.youbeats.Constants.maxResults;
 
 public class SearchResultsActivity extends Activity {
 
-
+//Testing
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
